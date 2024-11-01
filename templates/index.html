@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Perplexity Q&A</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #query-form {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #query-form input {
+            padding: 10px;
+            width: 70%;
+            margin-right: 10px;
+            font-size: 1em;
+        }
+        #query-form button {
+            padding: 10px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        #answer {
+            margin-top: 20px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mini Perplexity Q&A</h1>
+    <form id="query-form">
+        <input type="text" name="query" placeholder="Type your question here" required>
+        <button type="submit">Submit</button>
+    </form>
+    <div id="answer"></div>
+    <script>
+        document.getElementById("query-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            
+            // Get the query from the input field
+            const query = event.target.query.value;
+            const answerDiv = document.getElementById("answer");
+
+            // Clear previous answer
+            answerDiv.innerHTML = "<em>Loading...</em>";
+            
+            try {
+                // Send POST request to the /query endpoint
+                const response = await fetch("/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                // Check for response status
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "An unexpected error occurred.");
+                }
+                
+                // Parse the JSON response
+                const result = await response.json();
+                
+                // Display the answer with sources if available
+                answerDiv.innerHTML = `
+                    <strong>Answer:</strong> ${result.answer || "No answer available."}
+                    ${result.sources ? `<div><strong>Sources:</strong> ${result.sources}</div>` : ""}
+                `;
+            } catch (error) {
+                // Display error message
+                answerDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
+
